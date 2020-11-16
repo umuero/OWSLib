@@ -284,23 +284,36 @@ class CatalogueServiceWeb(object):
         - esn: the ElementSetName 'full', 'brief' or 'summary' (default is 'full')
         - outputschema: the outputSchema (default is 'http://www.opengis.net/cat/csw/2.0.2')
         - format: the outputFormat (default is 'application/xml')
-
         """
 
-        # construct request
-        data = {
-            'service': self.service,
-            'version': self.version,
-            'request': 'GetRecordById',
-            'outputFormat': format,
-            'outputSchema': outputschema,
-            'elementsetname': esn,
-            'id': ','.join(id),
-        }
+        if len(id) == 1:
+            # construct request
+            node0 = self._setrootelement('csw:GetRecordById')
+            node0.set('service', self.service)
+            node0.set('version', self.version)
+            node0.set('outputSchema', outputschema)
+            #    xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
+            etree.SubElement(node0, util.nspath_eval('csw:Id', namespaces)).text = id[0]
+            etree.SubElement(node0, util.nspath_eval('csw:ElementSetName', namespaces)).text = esn
 
-        self.request = urlencode(data)
+            self.request = node0
 
-        self._invoke()
+            self._invoke()
+        else:
+            # construct request
+            data = {
+                'service': self.service,
+                'version': self.version,
+                'request': 'GetRecordById',
+                'outputFormat': format,
+                'outputSchema': outputschema,
+                'elementsetname': esn,
+                'id': ','.join(id),
+            }
+
+            self.request = urlencode(data)
+
+            self._invoke()
 
         if self.exceptionreport is None:
             self.results = {}
